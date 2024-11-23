@@ -16,7 +16,7 @@ if (isset($_SESSION['user'])) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Aquí debes verificar el usuario y la contraseña
+    // Obtén los datos del formulario
     $username = $_POST['username'];
     $password = $_POST['password'];
     $role = $_POST['role']; // Obtener el rol seleccionado
@@ -35,10 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("Conexión fallida: " . $conn->connect_error);
     }
 
-    // Consulta para verificar el usuario y la contraseña
+    // Generar el hash de la contraseña ingresada con SHA2 (256 bits)
+    $hashed_password = hash('sha256', $password);
+
+    // Consulta para verificar el usuario, la contraseña encriptada y el rol
     $sql = "SELECT * FROM usuarios WHERE Username_U = ? AND Contraseña = ? AND Rol = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sss", $username, $password, $role);
+    $stmt->bind_param("sss", $username, $hashed_password, $role);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -72,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar sesión - Papelería Kathy</title>
     <style>
-        /* Aquí está el estilo CSS que me proporcionaste */
+        /* Estilos CSS */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -208,20 +211,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="password" id="password" name="password" placeholder="****" required>
 
             <label for="role">Selecciona el rol:</label>
-                        <select id="role" name="role" required>
-                        <option value="usuario">usuario</option>
-                            <option value="admin">admin</option>
-                            <option value="empleado">empleado</option>
-                        </select>
+            <select id="role" name="role" required>
+                <option value="usuario">usuario</option>
+                <option value="admin">admin</option>
+                <option value="empleado">empleado</option>
+            </select>
 
             <div class="forgot-password">
                 <a href="#">¿Olvidaste tu contraseña?</a>
             </div>
 
-            
-
             <button type="submit" class="login-btn" name="login">Ingresar</button>
         </form>
+
+        <?php if ($error): ?>
+            <div class="error-message"><?php echo $error; ?></div>
+        <?php endif; ?>
 
         <p>O conéctate con</p>
         <div class="social-login">
@@ -236,6 +241,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </button>
         </div>
     </div>
-
 </body>
 </html>
